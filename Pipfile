@@ -1,0 +1,27 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pylint = "*"
+autopep8 = "*"
+pydocstyle = "*"
+pytest = "*"
+coverage = "*"
+ipython = "*"
+jupyter = "*"
+mock = "*"
+mypy = "*"
+
+[packages]
+pandas = "*"
+selenium = "*"
+requests = "*"
+
+[requires]
+python_version = "3.7"
+
+[scripts]
+test = "pytest"
+start = "python -m main"
