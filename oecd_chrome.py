@@ -25,7 +25,8 @@ options.add_argument(f"download.prompt_for_download=false")  # TEST
 prefs = {"profile.default_content_settings.popups": 0,
          "download.prompt_for_download": False,
          "download.default_directory": path,
-         "download.directory_upgrade": True}
+         "download.directory_upgrade": True,
+         "browser.download.folderList": 1}
 options.add_experimental_option("prefs", prefs)
 
 os.environ['XDG_DOWNLOAD_DIR'] = path
@@ -34,12 +35,15 @@ desired_caps = {
             'download': {
                 'default_directory': path, 
                 "directory_upgrade": "true", 
-                "extensions_to_open": ""
+                "extensions_to_open": "",
+                "folderList": 1,
                 }
               }
         }
 desired_caps['browserstack.video'] = True
 desired_caps['browserstack.networkLogs'] = 'true'
+desired_caps['browser.download.folderList'] = 1
+
 
 
 # initialize the driver
@@ -97,3 +101,5 @@ from IPython import embed; embed()
 
 driver.quit()
 
+## TO TRY
+## https://www.varunpant.com/posts/download-file-using-webdriver-firefox-and-python-selenium
