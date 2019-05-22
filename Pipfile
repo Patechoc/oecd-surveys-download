@@ -18,6 +18,8 @@ mypy = "*"
 pandas = "*"
 selenium = "*"
 requests = "*"
+pyinotify = "*"
+asyncio = "*"
 
 [requires]
 python_version = "3.7"

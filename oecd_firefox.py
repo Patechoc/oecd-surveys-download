@@ -3,86 +3,80 @@ import requests
 from selenium import webdriver
 from pathlib import Path
 import time
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+## Objective: download ACTION6_22052019_102544.xlsx
+
 
 # https://developers.google.com/web/updates/2017/04/headless-chrome#drivers which refers to this
 # *** recommended setup ***: https://intoli.com/blog/running-selenium-with-headless-chrome/
 # Capabilites: https://www.browserstack.com/automate/python
 
-# configuring Selenium to work with headless Chrome
-options = webdriver.ChromeOptions()
-#### options.binary_location = '/usr/bin/google-chrome-unstable'
-options.add_argument('headless')
-# set the window size
+destination = "/home/patrick/Downloads/OECD"
+
+
+options = Options()
 options.add_argument('window-size=1200x600')
-# set download directory
-path = os.getcwd()
-options.add_argument(f"download.default_directory={path}")
+options.headless = True
+options.add_argument(f"download.default_directory={destination}")
 options.add_argument(f"download.prompt_for_download=false")  # TEST
-# options.add_argument("profile.default_content_settings.popups=0") # TEST 
 
-prefs = {"profile.default_content_settings.popups": 0,
-         "download.prompt_for_download": False,
-         "download.default_directory": path,
-         "download.directory_upgrade": True,
-         "browser.download.folderList": 1}
-options.add_experimental_option("prefs", prefs)
 
-os.environ['XDG_DOWNLOAD_DIR'] = path
-desired_caps = {
-    'prefs': {
-            'download': {
-                'default_directory': path, 
-                "directory_upgrade": "true", 
-                "extensions_to_open": "",
-                "folderList": 1,
-                }
-              }
-        }
-desired_caps['browserstack.video'] = True
-desired_caps['browserstack.networkLogs'] = 'true'
-desired_caps['browser.download.folderList'] = 1
+# configuring Selenium to work with Firefox
+profile = webdriver.FirefoxProfile()
 
 
 
-# initialize the driver
-path_to_log = path + "/chromedriver.log" 
-driver = webdriver.Chrome(options=options,
-                          desired_capabilities=desired_caps,
-                          service_args=["--verbose", f"--log-path={path_to_log}"])
-print(driver.capabilities)
+# 2 indicates a custom (see: browser.download.dir) folder
+profile.set_preference('browser.download.folderList', 2) 
+profile.set_preference('browser.download.dir', destination)
+# whether or not to show the Downloads window when a download begins.
+profile.set_preference('browser.download.manager.showWhenStarting', False)
+
+mime_types = ["image/png",
+              "image/jpeg",
+              "application/binary",
+              "application/pdf",
+              "application/csv",
+              "application/vnd.ms-excel",
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              "application/download",
+              "application/octet-stream",
+              "application/zip",
+              "application/x-rar-compressed",
+              "application/x-gzip",
+              "application/msword",
+              "text/csv",
+              "text/csv/xls/zip/exe/msi"]
+profile.set_preference('browser.helperApps.neverAsk.saveToDisk', ", ".join(mime_types))
+
+profile.set_preference("browser.download.manager.focusWhenStarting", False)
+# profile.set_preference("browser.download.useDownloadDir", True)
+profile.set_preference("browser.helperApps.alwaysAsk.force", False)
+# profile.set_preference("browser.download.manager.alertOnEXEOpen", False)
+profile.set_preference("browser.download.manager.closeWhenDone", True)
+profile.set_preference("browser.download.manager.showAlertOnComplete", False)
+profile.set_preference("browser.download.manager.useWindow", False)
 
 
-
-
-driver.get("http://www.google.com")
-if not "Google" in driver.title:
-    raise Exception("Unable to load google page!")
-elem = driver.find_element_by_name("q")
-elem.send_keys("BrowserStack")
-elem.submit()
-print(driver.title)
-
-
-
-
-
-# driver = webdriver.Chrome(str(Path("drivers", "chromedriver").resolve()))
-# driver = webdriver.Firefox()
-
-
-
-# # https://selenium-python.readthedocs.io/faq.html#how-to-auto-save-files-using-custom-firefox-profile
-# content_type = requests.head('https://www.python.org/').headers['content-type']
-# print(content_type)
+profile.update_preferences()
+driver = webdriver.Firefox(firefox_profile=profile,
+                           options=options,
+                           executable_path="/home/patrick/Documents/dev/Apenhet/yangle/drivers/geckodriver")
 
 
 
 
 driver.set_page_load_timeout(30)
-driver.get("https://qdd.oecd.org/subject.aspx?Subject=ACTION6")
-print(driver.title)
+url = "https://qdd.oecd.org/subject.aspx?Subject=ACTION6"
+driver.get(url)
+
+print("title page: ", driver.title)
+print("coockies: ", driver.get_cookies() )
+print("current URL: ", driver.current_url)
+print("session_id: ", driver.session_id)
 
 btn_create_table = driver.find_element_by_id("updateData")
 print(btn_create_table.text)
@@ -94,12 +88,17 @@ btn_download = driver.find_element_by_id("excel-download")
 driver.save_screenshot('screenshot_02.png')
 print(btn_download.text)
 resp = btn_download.click()
-time.sleep(40)
 
 
-from IPython import embed; embed()
 
+f = []
+now = time.time()
+seconds = 40
+end = now + seconds
+while not f and end > now:
+    now = time.time()
+    for (dirpath, dirnames, filenames) in os.walk(destination):
+        f.extend(filenames)
+        break
+print("files: ", f)
 driver.quit()
-
-## TO TRY
-## https://www.varunpant.com/posts/download-file-using-webdriver-firefox-and-python-selenium
