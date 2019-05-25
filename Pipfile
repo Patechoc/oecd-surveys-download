@@ -20,10 +20,12 @@ selenium = "*"
 requests = "*"
 pyinotify = "*"
 asyncio = "*"
+xlrd = "*"
+loguru = "*"
 
 [requires]
 python_version = "3.7"
 
 [scripts]
 test = "pytest"
-start = "python -m main"
+start = "python -m oecd_firefox"
