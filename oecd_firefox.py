@@ -5,7 +5,7 @@ This module downloads OECD surveys through automated series of clicks using Sele
 import os
 import time
 import pandas as pd
-from typing import List
+from typing import List, Set
 from pathlib import Path
 from loguru import logger
 from pprint import pprint
@@ -44,6 +44,21 @@ def get_oecd_urls_from_excel(input_dir: str = "data/inputs",
 
 
 def get_current_outputs(destination_path: str, show: bool=True) -> List[str]:
+    """
+    Read surveys (Excel files) already present in destination_path/.
+    
+    Parameters
+    ----------
+    destination_path : str
+        The path to the output folder
+    show : bool, optional
+        Print the content of the output folder if True, by default True
+    
+    Returns
+    -------
+    List[str]
+        The names of surveys (Excel files) present in the output folder.
+    """
     f = []
     for (dirpath, dirnames, filenames) in os.walk(
             destination_path.resolve()):
@@ -55,7 +70,22 @@ def get_current_outputs(destination_path: str, show: bool=True) -> List[str]:
 
 
 def get_survey_from_url(url: str,
-                        destination_dir: str = "data/inputs"):
+                        destination_dir: str = "data/inputs") -> Set:
+    """
+    Download the OECD survey given the URL of its main page.
+    
+    Parameters
+    ----------
+    url : str
+        The URL to the main page of an OECD report.
+    destination_dir : str, optional
+        Local output folder, by default "data/inputs"
+    
+    Returns
+    -------
+    Set
+        The set of new file(s) downloaded.
+    """
     if destination_dir:
         destination_path = Path(destination_dir)
     else:
@@ -91,9 +121,11 @@ def get_survey_from_url(url: str,
     new_files = set(surveys_xlsx) - set(downloaded_surveys)
     start = time.time()
     now = start
+    sec = 0
     while len(surveys_xlsx) == nb_outputs and now < start + 40:
         now = time.time()
-        print("downloading...")
+        sec += 1
+        print(f"downloading... ({sec}s)", end="\r")
         time.sleep(2)
         surveys_xlsx = get_current_outputs(destination_path, show=False)
         new_files = set(surveys_xlsx) - set(downloaded_surveys)
@@ -103,6 +135,19 @@ def get_survey_from_url(url: str,
 
 
 def setup_webdriver(destination_dir: str = "/tmp"):
+    """
+    Configure and setup the Firefox webdriver.
+    
+    Parameters
+    ----------
+    destination_dir : str, optional
+        The default folder for browser download, by default "/tmp".
+    
+    Returns
+    -------
+    webdriver
+        A configured webdriver.
+    """
     if destination_dir:
         destination_path = Path(destination_dir)
     else:
@@ -156,7 +201,7 @@ def main():
     destination_dir = destination_path.resolve()
     downloaded_surveys = get_current_outputs(destination_path, show=True)
     df = get_oecd_urls_from_excel(xlsx_file="OECD_datasets_urls.xlsx")
-    for url in set(df.URL.to_list()):
+    for url in set(sorted(df.URL.to_list())):
         # url = "https://qdd.oecd.org/subject.aspx?Subject=ACTION6"
         try:
             surveys_xlsx = get_survey_from_url(
