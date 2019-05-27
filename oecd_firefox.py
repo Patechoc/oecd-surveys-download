@@ -190,8 +190,7 @@ def setup_webdriver(destination_dir: str = "/tmp"):
 
     profile.update_preferences()
     driver = webdriver.Firefox(firefox_profile=profile,
-                               options=options,
-                               executable_path="/home/patrick/Documents/dev/Apenhet/yangle/drivers/geckodriver")
+                               options=options)
     driver.set_page_load_timeout(30)
     return driver
 
